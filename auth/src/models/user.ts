@@ -1,29 +1,40 @@
-import mongoose from 'mongoose';
+import mongoose, { Schema, Document, Model } from 'mongoose';
 
 interface UserAttrs {
-  email: string,
-  password: string
+  email: string;
+  password: string;
 }
 
-const userSchema = new mongoose.Schema({
-  email: { type: String, required: true },
-  password: { type: String, required: true },
-});
+interface UserDoc extends Document {
+  email: string;
+  password: string;
+}
 
-userSchema.set('toJSON', {
-  transform: (document, returnedObject) => {
-    returnedObject.id = returnedObject._id.toString();
+interface UserModel extends Model<UserDoc> {
+  build(attrs: UserAttrs): UserDoc;
+}
 
-    delete returnedObject.__v;
-    delete returnedObject._id;
-    delete returnedObject.password;
+const userSchema = new Schema<UserDoc>(
+  {
+    email: { type: String, required: true },
+    password: { type: String, required: true },
   },
-});
+  {
+    toJSON: {
+      transform(_, ret) {
+        ret.id = ret._id.toString();
+        delete ret._id;
+        delete ret.__v;
+        delete ret.password;
+      },
+    },
+  }
+);
 
-const store = (attrs: UserAttrs) => {
- return new User(attrs)
-}
+userSchema.statics.build = (attrs: UserAttrs) => {
+  return new User(attrs);
+};
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model<UserDoc, UserModel>('User', userSchema);
 
-export { User, store };
+export { User };
