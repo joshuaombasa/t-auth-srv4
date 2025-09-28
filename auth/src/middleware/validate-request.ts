@@ -1,19 +1,21 @@
 import express, { NextFunction, Request, Response } from 'express';
-import { validationResult } from 'express-validator';
+import { validationResult, ValidationError } from 'express-validator';
 import { RequestValidationError } from '../errors/request-validation-error';
 
-const validateRequest = (
-  request: Request,
-  response: Response,
-  next: NextFunction
-) => {
-  const errors = validationResult(request);
 
-  if (!errors.isEmpty()) {
-    throw new RequestValidationError(errors.array());
+const validateRequest = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  const errors = validationResult(req);
+
+  if (errors.isEmpty()) {
+    return next();
   }
 
-  next();
+  const extractedErrors: ValidationError[] = errors.array();
+  throw new RequestValidationError(extractedErrors);
 };
 
 export { validateRequest };
